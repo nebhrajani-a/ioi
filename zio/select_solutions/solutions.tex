@@ -3,6 +3,12 @@
 \documentclass[9pt]{extarticle}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{chessboard}
+\storechessboardstyle{4x4}{maxfield=d4}
+\storechessboardstyle{4x1}{maxfield=a4}
+\storechessboardstyle{4x2}{maxfield=b4}
+\storechessboardstyle{1x4}{maxfield=d1}
+\storechessboardstyle{2x4}{maxfield=d2}
 \usepackage{tikz}
 \usepackage{forest}
 \usepackage{graphicx}
@@ -68,8 +74,8 @@ one for its own deletion.
 Therefore, writing number of ways of deletion into the tree:
 \begin{center}
   \begin{tikzpicture}
-    \node {$1_{17}$} child {node {$2_2$}} child {node {$3_2$}} child {node {$4_2$}} child
-    {node {$5_2$}};
+    \node {$17$} child {node {$2$}} child {node {$2$}} child {node {$2$}} child
+    {node {$2$}};
   \end{tikzpicture}
 \end{center}
 
@@ -88,6 +94,54 @@ Solving bottom-up:
   \end{forest}
 \end{center}
 
+
+\section{2011}
+\subsection{n-Rooks Problem}
+A famous problem in chess is the n-queens problem, or placing $N$
+queens on an $N\times N$ chessboard such that none of them threaten
+each other. Below is a solution for $N=4$.
+
+\begin{center}
+  \chessboard[style=4x4,setwhite={Qa2,Qb4, Qc1, Qd3},showmover=false]
+  \hspace{1pt} \chessboard[style=4x4,setwhite={Ra3,Rb4, Rb2, Rc2},showmover=false]
+\end{center}
+
+The given problem can be thought of as an n-rooks problem, where no
+two rooks may threaten each other. As you may have guessed, this is an
+easier job than queens, since we don't have to worry about diagonal threats
+anymore. It is therefore possible to view the given example as a
+4$\times$4 chessboard, with some rooks threatening each other.
+
+We are now left with calculating how to move these rooks so that they
+don't threaten each other. It is sufficient to consider this one axis
+at a time, in the following way. First consider threats only along the
+$x$-axis, and draw a board by collapsing empty squares. Move a minimal
+number of times to reduce this board to a $1\times N$ board, then
+recompress. Repeat for the next axis. For the $x$-axis:
+
+\begin{center}
+  \chessboard[style=4x2,setwhite={Ra3,Ra4, Ra2, Rb2},showmover=false] \hspace{1pt}  \chessboard[style=4x1,setwhite={Ra3,Ra4, Ra2, Ra1},showmover=false]
+\end{center}
+
+Moving Rb2 down and recompressing, we get the desired board. This took
+one move. (Recompressing is a visual aid and does not count as a
+move.) Therefore, $M_x = 1$. Now, along the $y$-axis:
+
+
+\begin{center}
+  \chessboard[style=2x4,setwhite={Ra2,Rb2, Rb1, Rc2},showmover=false] \hspace{1pt} \chessboard[style=2x4,setwhite={Ra2,Rb2, Rc1, Rd2},showmover=false] \hspace{1pt}  \chessboard[style=1x4,setwhite={Ra1,Rb1, Rc1, Rd1},showmover=false]
+\end{center}
+
+To compress down, we must either move Rc2 to d2 and Rb1 to c1 (two
+moves) or move Rb1 to d1 (also two moves). So, $M_y = 2$. $$\sum M =
+M_x + M_y = 2 + 1 = 3$$
+
+Solve all subparts similarly. Be careful while doing compressions:
+choose a \emph{minimum} number of moves to compress. This will always
+mean moving a piece to the closest empty row or column, and not one
+further away. This can be done by directly moving the piece or by
+swapping in a chain: both of which will require the same number of
+moves, as shown above.
 
 
 \end{document}
