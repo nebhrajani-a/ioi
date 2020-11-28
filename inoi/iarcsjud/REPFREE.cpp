@@ -1,6 +1,5 @@
 #include<bits/stdc++.h>
 using namespace std;
-
 // Very naive algo
 
 int unique_checker(int N) {
