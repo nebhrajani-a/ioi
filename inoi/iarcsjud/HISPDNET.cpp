@@ -25,13 +25,52 @@ void combinations(std::vector<int> arr, std::vector<int> data, int start, int en
 
 int main()
 {
-  int N = 4;
-  // std::cin >> N;
+  int N;
+  std::cin >> N;
   int r = N-2;
-  std::vector<int> g = {4,5,6};
+  std::string str;
+  getline(std::cin, str);
+  // std::vector<int> g = {4,5,6};
+  // std::vector<std::vector<int>> q (N);
+  std::vector<int> a;
+
+  getline(std::cin,str);
+  for (int i = 1; i < N-1; ++i) {
+    getline(std::cin,str);
+    int iter = 0;
+    int b = 0;
+    for (int i = str.size() - 1; i >= 0; i--) {
+      if (str[i] == ' ') {
+        if (b == 0) {
+          break;
+        }
+        a.insert(a.begin(), b);
+        b = 0;
+        iter = 0;
+        i--;
+      }
+      if (i == 0) {
+        int p = str[i] - 48;
+        b += (std::pow(10, iter))*p;
+        if (b == 0) {
+          break;
+        }
+        a.insert(a.begin(), b);
+      }
+      int p = str[i] - 48;
+      b += (std::pow(10, iter))*p;
+      iter++;
+    }
+  }
+
+  // for (int i = 0; i < a.size(); ++i) {
+  //   std::cout << a[i] << " ";
+  // }
+  // std::cout << "\n";
+
 
   std::vector<int> data (r);
-  combinations(g, data, 0, g.size(), 0, r);
+  combinations(a, data, 0, a.size(), 0, r);
   std::cout << minimum << "\n";
 
   return 0;
