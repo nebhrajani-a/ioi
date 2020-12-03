@@ -1,14 +1,4 @@
-// DFS: the 'stack' is maintained as recursive function calls implicitly: watch
-// carefully.
-// DFS *does not* cover shortest paths. But it does something useful: *numbering*.
-
-//  ─────────────────────── Other applications of B/D FS ───────────────────────
-// Connecivity: look for zeros in the visited array after a run, and rerun using
-// the first occurence of 0 as the source. This divides the graph into sets of
-// connected vertices. Note the sets at runtime of DFS using an extra variable
-// called comp, writing to an array called component[] that records the
-// component of each node.
-// Catching cycles
+// DFS: the 'stack' is maintained as recursive function calls implicitly.
 
 #include <bits/stdc++.h>
 
@@ -36,8 +26,8 @@ int main()
   std::vector<int> visited (V);
   std::vector<int> parent (V);
 
-  // add_edge(g,0,1);
-  // add_edge(g,0,2);
+  add_edge(g,0,1);
+  add_edge(g,0,2);
   add_edge(g,1,2);
   add_edge(g,0,3);
   add_edge(g,3,4);

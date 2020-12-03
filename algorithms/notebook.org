@@ -1,6 +1,8 @@
-#+title: Important Algorithms Notebook for IOI
+#+title: Important Algorithms for IOI
 #+latex_class_options: [9pt]
 #+latex_header: \setlength\parindent{0pt}
+#+latex_header: \setminted{breaklines=true, style=default}
+
 \newpage
 
 * Introduction
@@ -9,12 +11,12 @@ Most problems can be reduced to either one of or a combination of the
 algorithms presented in this notebook. While not meant to be as
 comprehensive as a set of notes on CLRS, it includes the more
 challenging and important programs. Sorters and searchers (with the
-exception of binary search, which I struggled with) are omitted since
-they're basic and C++'s STL implements them well enough. This notebook
-focuses majorly on graph algorithms, dynamic programming, greedy
-programs, and trees. It assumes familiarity with C/C++ and basic
-programming techniques such as arrays/vectors, loops, lists,
-iteration, and recursion.
+exception of binary search, which I struggled with early on) are
+omitted since they're basic and C++'s STL implements them well enough.
+This notebook focuses majorly on graph algorithms, dynamic
+programming, greedy programs, and trees. It assumes familiarity with
+C/C++ and basic programming techniques such as arrays/vectors, loops,
+lists, iteration, and recursion.
 
 Note that it is bad practice to use the header =bits/stdc++.h=: it is
 *not* a standard header, and increases compile time by including
@@ -24,13 +26,85 @@ matters more than compile time. Obviously, if compilation takes too
 long, the bottleneck is probably this header.
 
 * Searchers
-** Binary search
-
+** Binary Search
    #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
    #+include: "./binary_search.cpp" src cpp
 
+   *Complexity: $O(\log_{2}{n})$*
    A basic algorithm, with a lot of similarity to QuickSort. $r$ and
    $l$ are the indexes of the subarray to search recursively. If $r <$
    $l$ directly return $-1$, the element wasn't found. If not, see if
    the current /mid/ is the element we're looking for. If so, return
    /mid/. Otherwise, recurse on either the LHS or RHS subarray.
+
+* Graphs
+  Graphs can be represented as adjacency matrices and adjacency lists.
+  Most algorithms use adjacency lists. Always write a function
+  returning =void= called =add_edge= that adds an edge. It can be
+  modified depending on whether the graph is directed and weighted.
+
+** Graph Searchers
+*** Breath First Search (BFS)
+    #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+    #+include: "./bfs.cpp" src cpp
+
+    *Complexity: $O(m+n)$*
+    Adjacency list representation. Undirected and unweighted in this
+    case. Usual declaration using =std::vector<std::vector<int>>= over
+    =std::vector<std::list<int>>= since vectors are faster with end
+    appends. Add the edges.
+
+    The procedure =bfs= maintains a =deque q=. Start at the =src= node.
+    Visit all of its neighbours who are unvisited. (For =src=, this is
+    by definition /all/ its neighbours.) Push them into =q= to visit
+    later. Pop the =q= and push the unvisited neighbours of the node we
+    popped. Keep doing this. At some point, all possible nodes
+    visitable from =src= will have been visited, and =q= will be empty.
+    We keep track of visited nodes using a standard vector =visited=.
+
+    Note that if we maintain a =parent= vector, that keeps track of
+    /from whom/ we visited the current node, we can backtrace the
+    vector to get the path from =src= to =dest=. This is by definition
+    the shortest path, since BFS doesn't go out of its way to explore
+    longer paths: it follows the most direct (least edges) route from
+    =src= to =dest=. This means BFS is a shortest path finder for
+    unweighted graphs (all edge weights = 1).
+
+*** Depth First Search (DFS)
+
+     #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+     #+include: "dfs.cpp" src cpp
+
+     *Complexity: $O(m+n)$*
+     DFS maintains a stack. It goes as far along a random path as
+     possible, pushing the node it left from into a stack. As soon as
+     it reaches the end of a path (i.e., it cannot visit an unvisited
+     node), it pops out and tries the same from the previous node it
+     left. This stack can be maintained implicitly by recursive calls
+     to DFS, as shown in the program.
+
+     Note that DFS *does not* cover shortest paths, but it can be used
+     for node numbering: by recording the `time' DFS entered a node
+     (started recursively calling its neighbours) and left it (exited
+     out of its last remaining neighbour and by extension, the node in
+     question).
+
+*** Applications of Graph Searchers
+**** Connectivity:
+     Some parts of a graph may not be connected to other parts of the
+     graph, creating sets of connected nodes. To figure out what
+     exactly these sets /are/, run either search from a =src= (say 0).
+     Observe the resultant =visited= array. The nodes that have been
+     visited are from the first set. Note them down if you need to. Now
+     run a search from an unvisited node. The additional nodes visited
+     are the second set. Repeat until all nodes are visited, and you'll
+     know the connectivity sets of the graph.
+
+**** TODO Catching cycles: Using DFS Numbering
+     More advanced concept, catches cycles in graphs using the numbers
+     DFS assigns as it visits nodes.
+
+** Shortest Paths
+*** Single Source: Djikstra's Algorithm
+     #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+     #+include: "djikstras_algorithm.cpp" src cpp
