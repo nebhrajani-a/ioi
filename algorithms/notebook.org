@@ -1,0 +1,36 @@
+#+title: Important Algorithms Notebook for IOI
+#+latex_class_options: [9pt]
+#+latex_header: \setlength\parindent{0pt}
+\newpage
+
+* Introduction
+
+Most problems can be reduced to either one of or a combination of the
+algorithms presented in this notebook. While not meant to be as
+comprehensive as a set of notes on CLRS, it includes the more
+challenging and important programs. Sorters and searchers (with the
+exception of binary search, which I struggled with) are omitted since
+they're basic and C++'s STL implements them well enough. This notebook
+focuses majorly on graph algorithms, dynamic programming, greedy
+programs, and trees. It assumes familiarity with C/C++ and basic
+programming techniques such as arrays/vectors, loops, lists,
+iteration, and recursion.
+
+Note that it is bad practice to use the header =bits/stdc++.h=: it is
+*not* a standard header, and increases compile time by including
+/every/ C++ library, not only the required ones. However, it's okay in
+competitive programming since the programs are small and runtime
+matters more than compile time. Obviously, if compilation takes too
+long, the bottleneck is probably this header.
+
+* Searchers
+** Binary search
+
+   #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+   #+include: "./binary_search.cpp" src cpp
+
+   A basic algorithm, with a lot of similarity to QuickSort. $r$ and
+   $l$ are the indexes of the subarray to search recursively. If $r <$
+   $l$ directly return $-1$, the element wasn't found. If not, see if
+   the current /mid/ is the element we're looking for. If so, return
+   /mid/. Otherwise, recurse on either the LHS or RHS subarray.
