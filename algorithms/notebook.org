@@ -100,7 +100,7 @@ long, the bottleneck is probably this header.
      are the second set. Repeat until all nodes are visited, and you'll
      know the connectivity sets of the graph.
 
-**** TODO Catching cycles: Using DFS Numbering
+**** (TODO) Catching cycles: Using DFS Numbering
      More advanced concept, catches cycles in graphs using the numbers
      DFS assigns as it visits nodes.
 
@@ -108,3 +108,31 @@ long, the bottleneck is probably this header.
 *** Single Source: Djikstra's Algorithm
      #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
      #+include: "djikstras_algorithm.cpp" src cpp
+     Djikstra's algorithm finds the shortest path from =src= to every
+     other vertex in the graph. It does so by making the locally
+     optimum choice (`greedy'). This results in the correct result by
+     induction, since any node that has been visited must have been
+     visited by a shortest path, and any extension chooses the
+     shortest route to that node.
+
+     Now, our implementation of Djikstra's works just fine, but its
+     complexity is $O(n^{2})$, because of the nested loop that
+     searches for the minimum element. This is quite simply
+     /horrible/, since the loop that's actually doing the work using
+     the adjacency list for the edges requires only $O(m)$ time. What
+     is done is practice is that a heap or red-black-tree is used so
+     that the operations =decrease-key= and =get-min-element= require
+     constant time rather than linear. This gives us a speedup to
+     complexity $O((n+m)\log{n})$.
+
+     In C++, the STL provides =std::set=, which used a balanced binary
+     search tree to manage data, meaning it's perfect in this
+     application: to access the minimum element, we only have to call
+     =set.begin()=. This is implemented in =GREATESC=, given below.
+     Note that we use C++'s inbuilt =pair= instead of defining our own
+     =struct node=, since it by default compares the first value
+     (weight). This prevents us from having to write a comparator
+     function and passing it to =set=.\\
+
+     #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+     #+include: "../inoi/iarcsjud/GREATESC.cpp" src cpp
