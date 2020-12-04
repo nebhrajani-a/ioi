@@ -136,3 +136,37 @@ long, the bottleneck is probably this header.
 
      #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
      #+include: "../inoi/iarcsjud/GREATESC.cpp" src cpp
+
+     A good and useful visualisation of Djikstra's algorithm is that
+     of a fire starting at $t=0$ at the source, and running along
+     every path connected to it at a speed of 1 unit per second. Every
+     time it reaches a vertex, note down $t$. That's the shortest path
+     distance from =src= to that vertex. This is also useful for
+     Djikstra's proof of correctness. Any vertex that is in the set of
+     `burnt' vertices has been reached (by induction) via a shortest
+     path. The base case is obvious: =dist[src] = 0=. Now, when any
+     vertex wants to be added to the =visited= set, it must be an
+     unvisited neighbour of =src=. It does this by choosing the
+     locally best path to do so, which in this case is either the
+     direct edge or through one of the previous neighbours. Since
+     Djikstra's algorithm only marks a node visited when it /reaches/
+     the node, it'll check its nearness to every one of its
+     neighbours.
+
+*** Single Source, Negative Edge Weights: Bellman-Ford Algorithm
+     #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+     #+include: "bellman_ford.cpp" src cpp
+
+     Bellman-Ford finds shortest paths when negative edge weights are
+     included. Djikstra's algorithm cannot be used for this
+     application since in making a locally optimum choice, it may miss
+     out on some better path due to a negative weight somewhere. To
+     fix this issue, Bellman-Ford `runs' Djikstra $V-1$ times, on the
+     set of vertices whose distance is *not* infinity. What this does
+     is it updates the direction vector (array) /every/ time a better
+     path is found. If a better path isn't found, it can `update' it,
+     but that doesn't change the value from its previously optimal
+     state. This takes care of Djikstra's central idea -- checking
+     each vertex only once -- which also contributes to Djikstra's
+     higher efficiency. At best, Bellman-Ford has time complexity
+     $O(mn)$ due to the $V-1$ loop.
