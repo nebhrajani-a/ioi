@@ -24,7 +24,16 @@ void sort(std::vector<std::vector<int>>& g, std::vector<int>& sorted)
 
   while (q.size() != 0) {
     int j = q[0];
+    sorted.push_back(j);
+    indegree[j] = -1;
     q.pop_front();
+    for (int i = 0; i < g[j].size(); ++i) {
+      indegree[g[j][i]]--;
+      if (indegree[g[j][i]] == 0) {
+        q.push_back(i);
+        std::cout << "Pushing back " << g[j][i] << "\n";
+      }
+    }
   }
 }
 
@@ -44,8 +53,13 @@ int main()
   add_edge(g,5,6);
   add_edge(g,6,7);
 
-  std::vector<int> sorted (V);
+  std::vector<int> sorted;
   sort(g, sorted);
+
+  // for (int x: sorted) {
+  //   std::cout << x << "\n";
+  // }
+
 
   return 0;
 }
