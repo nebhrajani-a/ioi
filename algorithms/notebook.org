@@ -1,6 +1,7 @@
 #+title: Important Algorithms for IOI
 #+latex_class_options: [9pt]
-#+latex_header: \usepackage[table]{xcolor}
+#+latex_header: \usepackage{diagbox}
+#+latex_header: \usepackage[table, dvipsnames]{xcolor}
 #+latex_header: \setlength\parindent{0pt}
 #+latex_header: \setminted{breaklines=true, style=default}
 
@@ -38,6 +39,7 @@ long, the bottleneck is probably this header.
    the current /mid/ is the element we're looking for. If so, return
    /mid/. Otherwise, recurse on either the LHS or RHS subarray.
 
+\newpage
 * Graphs
   Graphs can be represented as adjacency matrices and adjacency lists.
   Most algorithms use adjacency lists. Always write a function
@@ -145,14 +147,33 @@ long, the bottleneck is probably this header.
      distance from =src= to that vertex. This is also useful for
      Djikstra's proof of correctness. Any vertex that is in the set of
      `burnt' vertices has been reached (by induction) via a shortest
-     path. The base case is obvious: =dist[src] = 0=. Now, when any
-     vertex wants to be added to the =visited= set, it must be an
-     unvisited neighbour of =src=. It does this by choosing the
-     locally best path to do so, which in this case is either the
-     direct edge or through one of the previous neighbours. Since
-     Djikstra's algorithm only marks a node visited when it /reaches/
-     the node, it'll check its nearness to every one of its
-     neighbours.
+     path. The base case is obvious: =dist[src] = 0=. We now visit
+     every =unvisited= vertex that's a neighbour of =src=. We choose
+     the minimum out of these, meaning we make a locally optimum
+     choice, and mark it visited. The two vertices in the =visited=
+     set are a shortest path. Why? Assume the vertex added was =A=. It
+     was the vertex at minimum distance from =src=. For any other
+     path to be a shorter path from =src= to =A=, it will use some
+     other neighbour of =src=, plus its own path distance to =A=. But,
+     =A= is the closest neighbour of =src=, and is therefore the
+     shortest path. Now, follow a similar chain of logic taking =A= as
+     the new source. It won't `back-visit' =src= since both are in the
+     visited set.
+
+     Note that we simultaneously maintain an array called
+     =expected-burn-times= that can be thought of as the update array.
+     In the zeroth iteration, all values in this array are $+\infty$.
+     In the first iteration, all neighbours of =src= are marked with
+     their distance from =src=. If there's a shorter path that comes
+     up later, from =A=, or =A='s nearest neighbour, or so on, it's
+     updated. This also means $\mathtt{A_i}$'s neighbour selected may not be the
+     one with the least absolute distance from it, but instead the one
+     with the least value in =unvisited= -- it's greedy. All selected
+     vertices are marked visited, and all have been reached by a
+     shortest path.
+
+     Visualise as a spreading fire, with times being marked per
+     vertice. Boom.
 
 *** Single Source, Negative Edge Weights: Bellman-Ford Algorithm
      #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
@@ -172,7 +193,7 @@ long, the bottleneck is probably this header.
      higher efficiency. At best, Bellman-Ford has time complexity
      $O(mn)$ due to the $V-1$ loop.
 
-
+\newpage
 * Dynamic Programming
 ** Fibonacci
    $$T_{0} = 0, T_{1} = 1$$
@@ -241,7 +262,7 @@ long, the bottleneck is probably this header.
     $$p(0,0)=1$$
 
     #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
-    #+BEGIN_SRC cpp :exports both
+    #+BEGIN_SRC cpp :eval no-export :exports both
       #include <iostream>
 
       int naive_recursion_path(int i, int j)
@@ -339,7 +360,7 @@ long, the bottleneck is probably this header.
   holes exist.
 
     #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
-    #+BEGIN_SRC cpp :exports both
+    #+BEGIN_SRC cpp :eval no-export :exports both
       #include <iostream>
 
       int naive_recursion_path(int i, int j)
@@ -369,3 +390,593 @@ long, the bottleneck is probably this header.
 
     #+RESULTS:
     : 1743
+
+    Naturally, we can define an arbitrary number of holes this way.
+
+*** DP
+    It is obvious that the naive recursion approach recalculates many
+    values in the table. To reduce the complexity, we can use both
+    memoization or DP. DP is generally faster, although there are some
+    cases where a top-down memoized approach /may/ be better. (An
+    example is given later.)
+
+    As we do in DP, we must first reduce the problem to a DAG, then
+    solve it in topological order *iteratively*. This is obvious, it's the same
+    grid, with arrows pointing up and right in each cell. Therefore,
+    the bottom left intersection, $(0,0)$ is where we start, working
+    column by column, row by row, or diagonal by diagonal. For the
+    sake of this program, let's use row by row.
+
+    #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+    #+BEGIN_SRC cpp :eval no-export :exports both
+      #include <bits/stdc++.h>
+
+      int dp_path(int p, int q)
+      {
+        int i = p+1;
+        int j = q+1;
+        int dp[j][i];
+
+        for (int l = 0; l < i; ++l) {
+          dp[0][l] = 1;
+        }
+
+        for (int l = 0; l < j; ++l) {
+          dp[l][0] = 1;
+        }
+
+        for (int l = 1; l < j; ++l) {
+          for (int k = 1; k < i; ++k) {
+            dp[l][k] = dp[l-1][k] + dp[l][k-1];
+          }
+        }
+        return dp[q][p];
+      }
+
+      int main()
+      {
+        std::cout << dp_path(5,10) << "\n";
+        return 0;
+      }
+    #+END_SRC
+
+    #+RESULTS:
+    : 3003
+
+    We can now add holes, thus.
+    #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+    #+BEGIN_SRC cpp :eval no-export :exports both
+      #include <bits/stdc++.h>
+
+      int dp_path(int p, int q)
+      {
+        int i = p+1;
+        int j = q+1;
+        int dp[j][i];
+
+        for (int l = 0; l < i; ++l) {
+          dp[0][l] = 1;
+        }
+
+        for (int l = 0; l < j; ++l) {
+          dp[l][0] = 1;
+        }
+
+        for (int l = 1; l < j; ++l) {
+          for (int k = 1; k < i; ++k) {
+            dp[l][k] = dp[l-1][k] + dp[l][k-1];
+            if (l == 4 && k == 2) {
+              dp[l][k] = 0;
+            }
+          }
+        }
+        return dp[q][p];
+      }
+
+      int main()
+      {
+        std::cout << dp_path(5,10) << "\n";
+        return 0;
+      }
+    #+END_SRC
+
+    #+RESULTS:
+    : 1743
+
+    With the additional hole at $(4,4)$:
+
+    #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+    #+BEGIN_SRC cpp :eval no-export :exports both
+      #include <bits/stdc++.h>
+
+      int dp_path(int p, int q)
+      {
+        int i = p+1;
+        int j = q+1;
+        int dp[j][i];
+
+        for (int l = 0; l < i; ++l) {
+          dp[0][l] = 1;
+        }
+
+        for (int l = 0; l < j; ++l) {
+          dp[l][0] = 1;
+        }
+
+        for (int l = 1; l < j; ++l) {
+          for (int k = 1; k < i; ++k) {
+            dp[l][k] = dp[l-1][k] + dp[l][k-1];
+            if ((l == 4 && k == 2) || (l == 4 && k == 4)) {
+              dp[l][k] = 0;
+            }
+          }
+        }
+        return dp[q][p];
+      }
+
+      int main()
+      {
+        std::cout << dp_path(5,10) << "\n";
+        return 0;
+      }
+    #+END_SRC
+
+    #+RESULTS:
+    : 1358
+
+** Longest Common
+*** Subword
+   Consider two strings:
+   $$u = a_{1}a_{2}\hdots a_{n}$$
+   $$v = b_{1}b_{2}\hdots b_{m}$$
+
+   Our task is to find the longest common (contiguous) substring of these two
+   strings, that is, /k/ for some
+
+   $$a_{i}\hdots a_{i+k-1} = b_{j}\hdots b_{j+k-1}$$
+
+   This is inherently an extremely recursive/inductive problem.
+   Consider a function $l()$ returning the length of the longest
+   common substring. Then,
+
+   \[l(i,j) = \begin{cases}
+      0 &  a_{i} \neq b_{j}\\
+      1+ l(i+1,j+1) & a_{i} = b_{j}
+   \end{cases}
+   \]
+
+   where $i$ and $j$ are the indexes of the strings we're checking. We
+   must, however, also define boundary cases, for when we reach the
+   end of either string.
+
+   $$l(n+1,j) = 0$$
+   $$l(i,m+1) = 0$$
+
+   Now, the structure of this problem means that when we try to solve
+   it using DP, we will need the result of $l(i+1,j+1)$ before we can
+   find $l(i,j)$. Therefore, we create a DP matrix, which looks like
+   this:
+
+   #+ATTR_LATEX: :align |c|c||c|c|c|c|c|c|c|
+   |---+---------------+---+---+---+---+---+---+---------------|
+   |   |               | 0 | 1 | 2 | 3 | 4 | 5 |             6 |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   |   |               | s | e | c | r | e | t | $\varnothing$ |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 0 | b             |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 1 | i             |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 2 | s             |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 3 | e             |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 4 | c             |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 5 | t             |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 6 | $\varnothing$ |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+
+   We can fill it up starting from the bottom right corner. This time,
+   let's fill it up column by column, after initialising the boundary
+   cases. The completed matrix is:
+
+   #+ATTR_LATEX: :align |cc|ccccccc|
+   |-----+-----------------+-----+-----+-----+-----+-----+-----+-----------------|
+   |     |                 | *0* | *1* | *2* | *3* | *4* | *5* |             *6* |
+   |     |                 | *s* | *e* | *c* | *r* | *e* | *t* | *$\varnothing$* |
+   |-----+-----------------+-----+-----+-----+-----+-----+-----+-----------------|
+   | *0* | *b*             |   0 |   0 |   0 |   0 |   0 |   0 |               0 |
+   | *1* | *i*             |   0 |   0 |   0 |   0 |   0 |   0 |               0 |
+   | *2* | *s*             | *3* |   0 |   0 |   0 |   0 |   0 |               0 |
+   | *3* | *e*             |   0 |   2 |   0 |   0 |   1 |   0 |               0 |
+   | *4* | *c*             |   0 |   0 |   1 |   0 |   0 |   0 |               0 |
+   | *5* | *t*             |   0 |   0 |   0 |   0 |   0 |   1 |               0 |
+   | *6* | *$\varnothing$* |   0 |   0 |   0 |   0 |   0 |   0 |               0 |
+   |-----+-----------------+-----+-----+-----+-----+-----+-----+-----------------|
+
+   Putting this into C++:
+
+    #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+    #+BEGIN_SRC cpp :eval no-export :exports both
+      #include <iostream>
+      #include <cstring>
+
+      int lcw(char *u, char *v)
+      {
+        int p = strlen(v);
+        int q = strlen(u);
+        int dp[p + 1][q + 1];
+        for (int i = 0; i < p+1; ++i) {
+          dp[i][q] = 0;
+        }
+        for (int i = 0; i < q+1; ++i) {
+          dp[p][i] = 0;
+        }
+        int greatest = 0;
+        for (int i = q-1; i >= 0; --i) {
+          for (int j = p-1; j >= 0; --j) {
+            if (u[i] == v[j]) {
+              dp[j][i] = 1 + dp[j+1][i+1];
+              if (dp[j][i] > greatest) {
+                greatest = dp[j][i];
+              }
+            }
+            else {
+              dp[j][i] = 0;
+            }
+          }
+        }
+        for (int i = 0; i < p+1; ++i) {
+          for (int j = 0; j < q+1; ++j) {
+            std::cout << dp[i][j] << " ";
+          }
+          std::cout << "\n";
+        }
+        return greatest;
+      }
+
+      int main()
+      {
+        std::cout << lcw("secret", "bisect") << "\n";
+        return 0;
+      }
+
+    #+END_SRC
+
+    #+RESULTS:
+    | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+    | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+    | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
+    | 0 | 2 | 0 | 0 | 1 | 0 | 0 |
+    | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
+    | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
+    | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+    | 3 |   |   |   |   |   |   |
+
+    The complexity of this solution is $O(mn)$.
+
+*** Subsequence
+    Our task is to find the longest non-contiguous common letter
+    sequence. For example, in =bisect= and =secret=, the longest
+    subsequence is =sect=.
+
+
+    Now, this problem is a bit gnarly. The trick is to realise one
+    crucial point, illustrated below.
+
+
+    | a_0 | a_1 | a_2 | a_3 | a_4 | a_5 |
+    | b_0 | b_1 | b_2 | b_3 | b_4 | b_5 |
+
+    *Cases:*
+
+    1. If a_0 and b_0 match, it's all good, and we can continue to
+       check for a_1 and b_1, and so on. This is similar to our first
+       inductive conclusion in longest subword.
+       | \color{ForestGreen} a_0 | a_1 | a_2 | a_3 | a_4 | a_5 |
+       | \color{ForestGreen} b_0 | b_1 | b_2 | b_3 | b_4 | b_5 |
+
+    2. If a_0 and b_0 do *not* match, we cannot discard either of
+       them. This is because a_0 may match with some other b_j, or b_0
+       may match with some other a_i:
+       | \color{ForestGreen} a_0 | a_1 | a_2                     | a_3 | a_4 | a_5 |
+       | \color{red} b_0         | b_1 | \color{ForestGreen} b_2 | b_3 | b_4 | b_5 |
+
+       | \color{red} a_0         | a_1 | a_2 | \color{ForestGreen} a_3 | a_4 | a_5 |
+       | \color{ForestGreen} b_0 | b_1 | b_2 | b_3                     | b_4 | b_5 |
+
+       The two cases are either ignoring a_0 or b_0, not both, and
+       checking forward. This can be done inductively, always checking
+       for the next index onward with one of the values preserved.
+       This can also be thought of as maintaining (say) a_0 `shifting'
+       string b leftwards one unit, then rechecking, treating this new
+       shifted string as a new string. This must be done for both,
+       that is, we must check shifts for both strings.
+
+       We must therefore check /both/, and choose the maximum out of
+       them (recall that we are choosing the maximum length
+       subsequence, so it's okay to forget about ones with shorter length).
+
+    3. Naturally, the boundary/edge cases remain the same.
+
+    Our function, $L()$, therefore, has the following cases:
+
+   \[L(i,j) = \begin{cases}
+      1+ L(i+1,j+1) & a_{i} = b_{j}\\
+      \mathrm{max}(L(i+1,j),L(i,j+1)) & a_{i} \neq b_{j}
+   \end{cases}
+   \]
+
+   The edge cases remain the same:
+
+   $$L(n+1,j) = 0$$
+   $$L(i,m+1) = 0$$
+
+   Again, we can build a matrix that looks a lot like the previous
+   one, with dependencies in three directions: a call to $L(i,j)$
+   needs to check the maximum on the right and below as well as know
+   what's in $(i+1,j+1)$.
+
+   #+ATTR_LATEX: :align |c|c||c|c|c|c|c|c|c|
+   |---+---------------+---+---+---+---+---+---+---------------|
+   |   |               | 0 | 1 | 2 | 3 | 4 | 5 |             6 |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   |   |               | s | e | c | r | e | t | $\varnothing$ |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 0 | b             |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 1 | i             |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 2 | s             |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 3 | e             |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 4 | c             |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 5 | t             |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+   | 6 | $\varnothing$ |   |   |   |   |   |   |               |
+   |---+---------------+---+---+---+---+---+---+---------------|
+
+   Filling it up as a DP:
+   #+ATTR_LATEX: :align |cc|ccccccc|
+   |-----+-----------------+-----+-----+-----+-----+-----+-----+-----------------|
+   |     |                 | *0* | *1* | *2* | *3* | *4* | *5* |             *6* |
+   |     |                 | *s* | *e* | *c* | *r* | *e* | *t* | *$\varnothing$* |
+   |-----+-----------------+-----+-----+-----+-----+-----+-----+-----------------|
+   | *0* | *b*             |   4 |   3 |   2 |   2 |   2 |   1 |               0 |
+   | *1* | *i*             |   4 |   3 |   2 |   2 |   2 |   1 |               0 |
+   | *2* | *s*             |   4 |   3 |   2 |   2 |   2 |   1 |               0 |
+   | *3* | *e*             |   3 |   3 |   2 |   2 |   2 |   1 |               0 |
+   | *4* | *c*             |   2 |   2 |   2 |   1 |   1 |   1 |               0 |
+   | *5* | *t*             |   1 |   1 |   1 |   1 |   1 |   1 |               0 |
+   | *6* | *$\varnothing$* |   0 |   0 |   0 |   0 |   0 |   0 |               0 |
+   |-----+-----------------+-----+-----+-----+-----+-----+-----+-----------------|
+
+   Note that we can just look at the value of $(0,0)$ to get the
+   answer, since the maximum propagates to the top and left. We don't
+   have to explicitly maintain a =max= variable.
+
+   Expressing this in C++:
+    #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+    #+BEGIN_SRC cpp :eval no-export :exports both
+      #include <iostream>
+      #include <cstring>
+      #include <algorithm>
+
+      int lcs(char *u, char *v)
+      {
+        int p = strlen(v);
+        int q = strlen(u);
+        int dp[p + 1][q + 1];
+        for (int i = 0; i < p+1; ++i) {
+          dp[i][q] = 0;
+        }
+        for (int i = 0; i < q+1; ++i) {
+          dp[p][i] = 0;
+        }
+        for (int i = q-1; i >= 0; --i) {
+          for (int j = p-1; j >= 0; --j) {
+            if (u[i] == v[j]) {
+              dp[j][i] = 1 + dp[j+1][i+1];
+            }
+            else {
+              dp[j][i] = std::max(dp[j+1][i], dp[j][i+1]);
+            }
+          }
+        }
+        for (int i = 0; i < p+1; ++i) {
+          for (int j = 0; j < q+1; ++j) {
+            std::cout << dp[i][j] << " ";
+          }
+          std::cout << "\n";
+        }
+        return dp[0][0];
+      }
+      int main()
+      {
+        std::cout << lcs("secret", "bisect") << "\n";
+        return 0;
+      }
+
+    #+END_SRC
+
+    #+RESULTS:
+    | 4 | 3 | 2 | 2 | 2 | 1 | 0 |
+    | 4 | 3 | 2 | 2 | 2 | 1 | 0 |
+    | 4 | 3 | 2 | 2 | 2 | 1 | 0 |
+    | 3 | 3 | 2 | 2 | 2 | 1 | 0 |
+    | 2 | 2 | 2 | 1 | 1 | 1 | 0 |
+    | 1 | 1 | 1 | 1 | 1 | 1 | 0 |
+    | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+    | 4 |   |   |   |   |   |   |
+
+    This program also runs in $O(mn)$ time.
+
+** Edit Distance
+   The edit distance between two strings is merely how many operations
+   apart they are. This naturally varies according to which operations
+   are allowed. For our study, we use Levenshtein distance, that is,
+   the allowed operations are:
+   1. Insert a letter.
+   2. Delete a letter.
+   3. Substitute a single letter with another one.
+
+   Converting this to an inductive definition, for a function $E()$
+   returning the edit distance, is the following.
+
+    | a_0 | a_1 | a_2 | a_3 | a_4 | a_5 |
+    | b_0 | b_1 | b_2 | b_3 | b_4 | b_5 |
+
+   1. If a_0 = b_0, there's nothing to do (no edits to be made), move
+      on to $E(i+1,j+1)$.
+   2. If a_0 $\neq$ b_0,
+      a. We can substitute one for the other, and move on. This should
+         return $1 + E(i+1,j+1)$.
+      b. We can delete a_0. The function should then return $1+E(i+1,j)$.
+      c. We can insert b_0 at $i-1$ in a, meaning we now must find $1+
+         E(i,j+1)$.
+
+   This is pretty similar to the definition for $L()$, with the
+   exception that we will seek the minimum value for (2) rather than
+   the maximum, since we want the /minimum/ edit distance.
+
+   \[E(i,j) = \begin{cases}
+      E(i+1,j+1) & a_{i} = b_{j}\\
+      1+\mathrm{min}(E(i+1,j+1),E(i+1,j),E(i,j+1)) & a_{i} \neq b_{j}
+   \end{cases}
+   \]
+
+   The edge cases, however, have a major change. This is because of
+   the fact that the edit distance between a $\varnothing$ string and
+   a string of non-negative length is the length of the non-null
+   string. Therefore,
+
+   $$E(n+1,j) = m-j+1$$
+   $$E(i,m+1) = n-i+1$$
+
+
+   We skip to writing the code for this example, since the matrices
+   are very similar to the previous problems, with the exception that
+   on a mismatch, we seek to add the minimum of the surrounding three
+   values with one. In C++,
+
+    #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+    #+BEGIN_SRC cpp :eval no-export :exports both
+      #include <iostream>
+      #include <cstring>
+      #include <algorithm>
+
+      int ed(char *u, char *v)
+      {
+        int p = strlen(v);
+        int q = strlen(u);
+        int dp[p + 1][q + 1];
+        for (int i = 0; i < p+1; ++i) {
+          dp[i][q] = p-i;
+        }
+        for (int i = 0; i < q+1; ++i) {
+          dp[p][i] = q-i;
+        }
+        for (int i = q-1; i >= 0; --i) {
+          for (int j = p-1; j >= 0; --j) {
+            if (u[i] == v[j]) {
+              dp[j][i] = dp[j+1][i+1];
+            }
+            else {
+              dp[j][i] = 1 + std::min(dp[j+1][i+1], std::min(dp[j+1][i], dp[j][i+1]));
+            }
+          }
+        }
+        for (int i = 0; i < p+1; ++i) {
+          for (int j = 0; j < q+1; ++j) {
+            std::cout << dp[i][j] << " ";
+          }
+          std::cout << "\n";
+        }
+        return dp[0][0];
+      }
+      int main()
+      {
+        std::cout << ed("secret", "bisect") << "\n";
+        return 0;
+      }
+
+    #+END_SRC
+
+    #+RESULTS:
+    | 4 | 4 | 4 | 4 | 4 | 5 | 6 |
+    | 3 | 4 | 3 | 3 | 3 | 4 | 5 |
+    | 2 | 3 | 3 | 2 | 2 | 3 | 4 |
+    | 3 | 2 | 3 | 2 | 1 | 2 | 3 |
+    | 4 | 3 | 2 | 2 | 1 | 1 | 2 |
+    | 5 | 4 | 3 | 2 | 1 | 0 | 1 |
+    | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+    | 4 |   |   |   |   |   |   |
+
+*** A Note on Backtracking and Space Complexity
+    To find the actual /edits/ or the actual subsequence, we must
+    backtrace in the matrix. This is done simply by taking our answer,
+    and figuring out how we got there. This is easy for subwords,
+    since we can also return the position where the last match was,
+    and simply read the subword from either of the strings. However,
+    for subsequences and edit distances, this can be harder. Consider
+    our last edit matrix,
+
+   #+ATTR_LATEX: :align c|cccccccc
+    |               |   s | e | c | r | e | t | $\varnothing$ |
+    |---------------+-----+---+---+---+---+---+---------------|
+    | b             | *4* | 4 | 4 | 4 | 4 | 5 |             6 |
+    | i             |   3 | 4 | 3 | 3 | 3 | 4 |             5 |
+    | s             |   2 | 3 | 3 | 2 | 2 | 3 |             4 |
+    | e             |   3 | 2 | 3 | 2 | 1 | 2 |             3 |
+    | c             |   4 | 3 | 2 | 2 | 1 | 1 |             2 |
+    | t             |   5 | 4 | 3 | 2 | 1 | 0 |             1 |
+    | $\varnothing$ |   6 | 5 | 4 | 3 | 2 | 1 |             0 |
+
+    We start from position $(0,0)$. How could we have gotten there?
+    Since s $\neq$ b, it must have been by taking the minimum element
+    around it, and adding 1. Clearly, we got there from the 3 below.
+    From there, again, we came from 2. From 2, since s $=$ s, we came
+    from the 2 diagonal to it. Again, e $=$ e, and c $=$ c. We then
+    move two spaces left, reaching t $=$ t. Finally, we reach the
+    bottom left corner.
+   #+ATTR_LATEX: :align c|cccccccc
+    | \backslashbox{v}{u} |   s |   e |   c |   r |   e |   t | $\varnothing$ |
+    |---------------------+-----+-----+-----+-----+-----+-----+---------------|
+    | b                   | *4* |   4 |   4 |   4 |   4 |   5 |             6 |
+    | i                   | *3* |   4 |   3 |   3 |   3 |   4 |             5 |
+    | s                   | *2* |   3 |   3 |   2 |   2 |   3 |             4 |
+    | e                   |   3 | *2* |   3 |   2 |   1 |   2 |             3 |
+    | c                   |   4 |   3 | *2* |   2 |   1 |   1 |             2 |
+    | t                   |   5 |   4 |   3 | *2* | *1* | *0* |             1 |
+    | $\varnothing$       |   6 |   5 |   4 |   3 |   2 |   1 |           *0* |
+
+   From this, the sequence of moves is easy to compute, a vertical
+   downward move is deleting a letter from $v$. A horizontal rightward
+   move is deleting a letter from $u$, or inserting a letter into $v$.
+   A diagonal move can be one of two cases: if the two letters were
+   equal, it's the null move, it does nothing. If the two letters were
+   unequal, it was a substitution. Our complete traceback is
+   therefore:
+
+   1. Delete `b' from _\texttt{b}_\texttt{isect}.
+   2. Delete `i' _\texttt{i}_\texttt{sect}.
+   3. Insert `r' into =sec_t=.
+   4. Insert `e' into =secr_t=.
+
+   We therefore have edited =bisect= to =secret= in 4 moves.\\
+
+   On space complexity: the current space complexity is $O(mn)$, since
+   we're storing the whole matrix. However, as in many DP problems,
+   this isn't necessary. We only need two rows or columns at a time.
+   This means that if we really want to optimize for space, we can
+   basically forget about all but the column (or row) we're currently
+   operating on. This will prevent a post-write traceback, we must
+   record the moves we make as we write the two arrays. This method
+   has space complexity $O(m)$ or $O(n)$. Whichever is smaller among
+   $m$ and $n$ can be used, minimising space complexity.
