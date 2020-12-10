@@ -193,6 +193,44 @@ long, the bottleneck is probably this header.
      higher efficiency. At best, Bellman-Ford has time complexity
      $O(mn)$ due to the $V-1$ loop.
 
+# Top.sort, All pairs shortest path
+
+** Minimum Spanning Trees
+
+*** What is an MST?
+
+   A *tree* is a connected, acyclic graph. Connected means that there is
+   no component (set of vertices) of the graph that *cannot* be
+   reached from any other component. An acyclic graph is one where
+   there is only one (unique) path from any two vertices $i$ to $j$.\\
+
+   A *spanning tree* is one which includes all vertices of another
+   graph $G$, that is, it /spans/ all vertices of this graph.\\
+
+   A *minimum spanning tree* is a spanning tree which spans a weighted
+   acyclic graph while costing the /minimum/ in terms of edge weights.
+
+*** Motivation
+
+    MSTs are interesting to, say, a network where every node must be
+    connected to every other node with minimum possible cost. Other
+    graph optimization problems where a spanning tree with low weight
+    is required (generally in many networking problems), such as
+    approximation of NP-complete problems and cluster analysis. It's
+    also used in handwriting recognition. \footnote{Read more.}
+
+*** Prim's Algorithm
+
+    *Outline:* Select the edge with lowest weight from $G$. Draw the
+    tree. Look at the edge weights of neighbours of tree vertices.
+    Select the lowest such that the tree will not become acyclic. Run
+    $V-1$ times.
+
+*** Kruskal's Algorithm
+    *Outline:* Pick edges in ascending order, and add them to the
+    tree. The tree will initially not necessarily be connected. Keep
+    adding edges in ascending order, then connect the components.
+
 \newpage
 * Dynamic Programming
 ** Fibonacci
