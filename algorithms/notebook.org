@@ -1,9 +1,29 @@
 #+title: Important Algorithms for IOI
+#+latex_class: org-report
 #+latex_class_options: [9pt]
 #+latex_header: \usepackage{diagbox}
 #+latex_header: \usepackage[table, dvipsnames]{xcolor}
-#+latex_header: \setlength\parindent{0pt}
+#+latex_header: \usepackage{parskip}
 #+latex_header: \setminted{breaklines=true, style=default}
+#+latex_header: \makeatletter
+#+latex_header: \def\@makechapterhead#1{%
+#+latex_header:  {\parindent \z@ \raggedright \normalfont
+#+latex_header:    \ifnum \c@secnumdepth >\m@ne
+#+latex_header:        \LARGE\bfseries \thechapter:
+#+latex_header:    \fi
+#+latex_header:    \interlinepenalty\@M
+#+latex_header:    \LARGE \bfseries #1\par\nobreak
+#+latex_header:    \vskip 10\p@
+#+latex_header:  }}
+#+latex_header:\def\@makeschapterhead#1{%
+#+latex_header:  {\parindent \z@ \raggedright
+#+latex_header:    \normalfont
+#+latex_header:    \interlinepenalty\@M
+#+latex_header:    \Huge \bfseries  #1\par\nobreak
+#+latex_header:    \vskip 10\p@
+#+latex_header:  }}
+#+latex_header:\makeatother
+
 
 \newpage
 
@@ -104,6 +124,7 @@ long, the bottleneck is probably this header.
      know the connectivity sets of the graph.
 
 **** (TODO) Catching cycles: Using DFS Numbering
+
      More advanced concept, catches cycles in graphs using the numbers
      DFS assigns as it visits nodes.
 
@@ -173,7 +194,7 @@ long, the bottleneck is probably this header.
      shortest path.
 
      Visualise as a spreading fire, with times being marked per
-     vertice. Boom.
+     vertex.
 
 *** Single Source, Negative Edge Weights: Bellman-Ford Algorithm
      #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
@@ -217,19 +238,176 @@ long, the bottleneck is probably this header.
     graph optimization problems where a spanning tree with low weight
     is required (generally in many networking problems), such as
     approximation of NP-complete problems and cluster analysis. It's
-    also used in handwriting recognition. \footnote{Read more.}
+    also used in handwriting recognition.
 
 *** Prim's Algorithm
 
-    *Outline:* Select the edge with lowest weight from $G$. Draw the
-    tree. Look at the edge weights of neighbours of tree vertices.
-    Select the lowest such that the tree will not become acyclic. Run
-    $V-1$ times.
+    *Outline*
+
+    Select the edge with lowest weight from $G$. Draw the tree. Look
+    at the edge weights of neighbours of tree vertices. Select the
+    lowest such that the tree will not become acyclic. Run $V-1$
+    times.
+
+    Prim's is a greedy algorithm, so we require a proof of
+    correctness.\\
+
+    *Proof and Minimum Seperator Lemma*
+
+    Let set $V$ be partitioned into two non-empty sets of vertices $U$
+    and $W$, and let $e$ be the edge of minimum weight joining these two
+    sets. We claim that every MST must include $e$.
+
+    To prove this by contradiction is easy: assume an edge $e$ joining
+    $u$ (a member of $U$) and $w$ (a member of $W$). Let this be the
+    smallest edge joining $U$ and $W$.
+
+    Consider some other edge $e'$ joining $U$ and $W$ via path $(u',
+    w')$, which is included in some ST.
+
+    Now, the weight of this ST could be reduced by using $e$ instead
+    of $e'$ (by definition, $e$ is the edge of minimum weight).
+    Therefore, the minimum spanning tree must contain $e$.
+
+    Note that $e'$ *must* be an edge that connects to $u$ and $w$ as
+    well (part of the same component): we cannot replace any arbitrary
+    edge with $e$.\\
+
+    The correctness of Prim's algorithm is now obvious: we always pick
+    the minimum edge when adding an edge to the current tree, which
+    must be the MST. Recall that we no longer need to start with the
+    edge with globally the lowest weight: we can start with any
+    vertex's lowest edge.\\
+
+    *Implementation*
+
+    #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+    #+BEGIN_SRC cpp :eval no-export :exports both
+      #include <bits/stdc++.h>
+
+      struct tree_edge
+      {
+        int src;
+        int dest;
+      };
+
+      struct node
+      {
+        int dest;
+        int weight;
+      };
+
+      void add_edge(std::vector<std::vector<node>>& g, int src, int dest, int weight)
+      {
+        g[src].push_back({dest, weight});
+        g[dest].push_back({src, weight});
+      }
+
+      void prim(std::vector<std::vector<node>>& g, std::vector<tree_edge>& tree_edges)
+      {
+        std::vector<bool> visited (g.size());
+        std::vector<int> nbr (g.size());
+        std::vector<int> distance (g.size(), std::numeric_limits<int>::max());
+
+        visited[0] = true;
+        distance[0] = 0;
+
+        for (int i = 0; i < g[0].size(); ++i) {
+          nbr[g[0][i].dest] = 0;
+          distance[g[0][i].dest] = g[0][i].weight;
+        }
+
+        for (int i = 1; i < g.size(); ++i) {
+          int min = std::numeric_limits<int>::max();
+          int u;
+          for (int j = 0; j < g.size(); ++j) {
+            if (!visited[j]) {
+              if (distance[j] < min) {
+                min = distance[j];
+                u = j;
+              }
+            }
+          }
+          visited[u] = true;
+          tree_edges.push_back({u, nbr[u]});
+          for (int j = 0; j < g[u].size(); ++j) {
+            if (!visited[g[u][j].dest]) {
+              if (distance[g[u][j].dest] > g[u][j].weight) {
+                distance[g[u][j].dest] = g[u][j].weight;
+                nbr[g[u][j].dest] = u;
+              }
+            }
+          }
+        }
+      }
+
+      int main()
+      {
+        int V = 7;
+        std::vector<std::vector<node>> g (V);
+        add_edge(g,0,1,10);
+        add_edge(g,0,2,18);
+        add_edge(g,1,2,6);
+        add_edge(g,2,3,70);
+        add_edge(g,1,4,20);
+        add_edge(g,4,6,10);
+        add_edge(g,4,5,10);
+        add_edge(g,5,6,5);
+
+        std::vector<tree_edge> tree_edges;
+        prim(g, tree_edges);
+
+        for (auto x: tree_edges) {
+          std::cout << x.src << " " << x.dest << "\n";
+        }
+        return 0;
+      }
+
+
+
+    #+END_SRC
+
+    #+RESULTS:
+    | 1 | 0 |
+    | 2 | 1 |
+    | 4 | 1 |
+    | 5 | 4 |
+    | 6 | 5 |
+    | 3 | 2 |
+
+
+    Note that this is exactly like Djikstra's algorithm, albeit with a
+    different update function and with recording the tree in a vector
+    called =tree_edges=. Again, this implementation doesn't use a heap
+    for the =min_find= operation, which would reduce the complexity
+    from $O(n^{2})$ to $O((m+n)\log{n})$.
 
 *** Kruskal's Algorithm
-    *Outline:* Pick edges in ascending order, and add them to the
-    tree. The tree will initially not necessarily be connected. Keep
-    adding edges in ascending order, then connect the components.
+    *Outline*
+
+    Pick edges in ascending order, and add them to the tree. The tree
+    will initially not necessarily be connected. Keep adding edges in
+    ascending order, then connect the components.\\
+
+    *Proof*
+
+    Kruskal's algorithm involves merging disjoint components of a
+    graph. During this =merge= operation, Kruskal's algorithm selects
+    the globally minimum edge that *does not form a cycle.* This means
+    that adding this edge is the equivalent of the edge chosen by the
+    minimum seperator lemma: it's joining two disjoint components
+    using the shortest possible edge.\\
+
+    *Implementation*
+
+     #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
+     #+BEGIN_SRC cpp :eval no-export :exports both
+       #include <bits/stdc++.h>
+
+
+     #+END_SRC
+
+     #+RESULTS:
 
 \newpage
 * Dynamic Programming
