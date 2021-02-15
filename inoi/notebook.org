@@ -165,7 +165,53 @@ Sample output
 
     Now, this function is applicable to both the forward and backward
     direction array sums (without defining a second function $b()$ for
-    the backward direction). This is advantageous to us
+    the backward direction), albeit with a different base case. The
+    base cases for the forward direction are:
+
+    \[f_{f}(i) = \begin{cases}
+    0 & i <= k\\
+    a[i] + f_{f}(i-1) + f_{f}(i-2) & i > k
+    \end{cases}
+    \]
+
+    For the backward direction:
+
+    \[f_{b}(i) = \begin{cases}
+    0 & i = 0\\
+    a[1] & i = 1\\
+    a[i] + f_{b}(i-1) + f_{b}(i-2) & i > 1
+    \end{cases}
+    \]
+
+    Let us reason this out. The forward direction is obvious: since we
+    start at $k$, the value of $f(i)~\forall ~ i <= k = 0$. $\forall i
+    > k$, we follow the recursive function.
+
+    The backward case is a bit more interesting. First, it is
+    important to understand that we cannot simply define $b() = a[i] +
+    b(i+1) + b(i+2)$ (the inverse of $f_{f}$). This is because, from
+    the question statement, there is a forward stage and a backward
+    stage, with a common element at the end of the forward stage and
+    start of the backward stage. If we use function $b()$, we lose the
+    information of where such a sequence began
+
+
+    Therefore, the function $f_{g}$ actually needs to tell us what the
+    maximum score can be if we actually /turn back/ from that point.
+    This makes this operation identical to $f_{f}$ with the exception
+    of base cases: $f_{b}(0) = 0$, $f_{b}(1) = a[1]$, $f_{b}(2) =
+    a[1] + a[2]$. The base cases follow if you think about what's the
+    highest score you can get from index 2.
+
+    We've therefore logically verified both functions $f_{f}$ and
+    $f_{b}$. Now, how do we combine them to get the required result?
+
+    The `turn back point' can only be an index after $k$. For each
+    index in $[k+1,N]$, we add $f_{f}(i) + f_{b}(i)$, then subtract
+    the double counted $a[i]$. Of all these, we select the maximum
+    demanded by the question.
+
+    This approach is shown below in C++.
 
     #+ATTR_LATEX: :options frame=single, framesep=10pt, linenos
     #+include: ./inoiprac/INOI1301.cpp src cpp
