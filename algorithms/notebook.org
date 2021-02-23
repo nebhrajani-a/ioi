@@ -1196,3 +1196,6 @@ long, the bottleneck is probably this header.
    record the moves we make as we write the two arrays. This method
    has space complexity $O(m)$ or $O(n)$. Whichever is smaller among
    $m$ and $n$ can be used, minimising space complexity.
+** Tiling Problems
+   Tiling problems are classically recursive problems in dynamic
+   programming due to
