@@ -1,0 +1,32 @@
+#+title: Shorthand Algorithms for INOI
+#+latex_class_options: [9pt]
+#+options: toc:nil
+#+latex_header: \usepackage{diagbox}
+#+latex_header: \usepackage[table, dvipsnames]{xcolor}
+#+latex_header: \usepackage{parskip}
+#+latex_header: \setminted{breaklines=true, style=default}
+#+latex_header: \makeatletter
+#+latex_header: \def\@makechapterhead#1{%
+#+latex_header:  {\parindent \z@ \raggedright \normalfont
+#+latex_header:    \ifnum \c@secnumdepth >\m@ne
+#+latex_header:        \LARGE\bfseries \thechapter:
+#+latex_header:    \fi
+#+latex_header:    \interlinepenalty\@M
+#+latex_header:    \LARGE \bfseries #1\par\nobreak
+#+latex_header:    \vskip 10\p@
+#+latex_header:  }}
+#+latex_header:\def\@makeschapterhead#1{%
+#+latex_header:  {\parindent \z@ \raggedright
+#+latex_header:    \normalfont
+#+latex_header:    \interlinepenalty\@M
+#+latex_header:    \Huge \bfseries  #1\par\nobreak
+#+latex_header:    \vskip 10\p@
+#+latex_header:  }}
+#+latex_header:\makeatother
+
+
+Condensed notes for INOI preparation, mostly from IARCS study
+material. Main focus is DFS and DP, among other graph algorithms.
+Useful C++ =std::= templates noted where necessary.
+
+* BFS
