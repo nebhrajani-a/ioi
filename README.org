@@ -1,5 +1,1 @@
-* IOI Resources
-
-  My resources and solutions for various stages and problems in the
-  ZIO, INOI, and IOI. Errors remain my own. Problem statements are
-  given if the year's question paper isn't in the repository.
+* Competitive Programming Resources
